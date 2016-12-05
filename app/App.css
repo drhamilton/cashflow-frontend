@@ -1,0 +1,11 @@
+.addTransaction {
+    align-items: flex-end;
+    display: flex;
+    padding: 1em;
+    border: 1px solid #666;
+    margin: 0 0 1em;
+}
+
+.transactionContainer {
+    padding: 1em;
+}

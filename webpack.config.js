@@ -4,29 +4,41 @@ var webpack = require('webpack');
  * Default webpack configuration for development
  */
 var config = {
-  devtool: 'eval-source-map',
-  entry:  __dirname + "/app/App.js",
-  output: {
-    path: __dirname + "/public",
-    filename: "bundle.js"
-  },
-  module: {
-    loaders: [{
-      test: /\.jsx?$/,
-      exclude: /node_modules/,
-      loader: 'babel',
-      query: {
-        presets: ['es2015','react', 'stage-0']
-      }
-    }]
-  },
-  devServer: {
-    contentBase: "./public",
-    colors: true,
-    historyApiFallback: true,
-    inline: true
-  },
-}
+        devtool: 'eval-source-map',
+        entry:  __dirname + "/app/App.js",
+        output: {
+        path: __dirname + "/public",
+        filename: "bundle.js"
+    },
+
+    module: {
+        loaders: [
+            {
+                test: /\.jsx?$/,
+                exclude: /node_modules/,
+                loader: 'babel',
+                query: {
+                    presets: ['es2015', 'react', 'stage-0']
+                }
+            },
+            {
+                test: /\.css$/,
+                loader: 'style!css?modules!postcss'
+            }
+        ]
+    },
+
+    postcss: [
+        require('autoprefixer')
+    ],
+
+    devServer: {
+        contentBase: "./public",
+        colors: true,
+        historyApiFallback: true,
+        inline: true,
+    },
+};
 
 /*
  * If bundling for production, optimize output

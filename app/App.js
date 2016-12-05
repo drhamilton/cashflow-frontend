@@ -1,99 +1,157 @@
 import React, { Component } from 'react';
 import {render} from 'react-dom';
-import Greeting from './testComponents/Greeting';
-import Clock from './testComponents/Clock';
+
+import './main.css';
+import styles from './App.css';
+
+import Home from './Home';
+import Inbox from './Inbox';
+import InboxStats from './InboxStats';
+import Message from './Message';
+
+import transactionData from './data/expenses';
 
 import { Router, Route, IndexRoute, Link, hashHistory } from 'react-router'
 
-class Home extends Component {
-    state = {
-        text: ''
-    };
-
-    handleTextChange = (value) => {
-        this.setState({ text: value });
-    };
-
-    render(){
-        let text = this.state.text;
+class Transaction extends Component {
+    render() {
+        let {category, amount, description} = this.props;
         return (
-            <div>
-                <h1>Welcome Home</h1>
-                <Clock />
-                <Greeting onChange={this.handleTextChange} text={text} />
-            </div>
+            <tr>
+                <td>{amount}</td>
+                <td>{category}</td>
+                <td>{description}</td>
+            </tr>
         )
     }
 }
 
-const About = () => (
-    <h1>About me</h1>
-);
+class TransactionList extends Component {
+    render() {
+        let { transactions } = this.props;
 
-const messages = {
-    3: 'Hey, this is message 3',
-    4: 'Well hey this is message 4'
-};
+        let list = transactions.map(transaction => {
+            return <Transaction {...transaction} />
+        });
 
-class Message extends Component {
+        return (
+            <table>
+                <tbody>{list}</tbody>
+            </table>
+        );
+    }
+}
+
+class TransactionControls extends Component {
     state = {
-        message: ''
+        amount: '',
+        category: 'savings',
+        description: ''
     };
 
-    fetchMessage = (id) => {
-        return new Promise(function(resolve, reject){
-            let message = messages[id];
+    handleSubmit = e => {
+        e.preventDefault();
 
-            resolve(message);
-        })
+        this.props.onSubmit(this.state);
+    };
+
+    handleChange = (name, e) => {
+        let update = {};
+        update[name] = e.target.value;
+
+        this.setState(update);
+    };
+
+    handleCategoryChange = (e) => {
+        this.setState({ category: e.target.value });
+    };
+
+    render() {
+        let { amount, category, description } = this.state;
+
+        return (
+            <form className={styles.addTransaction} onSubmit={this.handleSubmit}>
+                <label htmlFor="amount">
+                    Amount
+                    <input type="text" name="amount" value={amount} onChange={this.handleChange.bind(this, 'amount')} />
+                </label>
+
+                <label htmlFor="category">
+                    Category
+                    <select value={category} onChange={this.handleCategoryChange} name="category">
+                        <option value="savings">Savings</option>
+                        <option value="groceries">Groceries</option>
+                        <option value="fig">Fig</option>
+                    </select>
+                </label>
+
+                <label htmlFor="description">
+                    Description
+                    <input type="text" name="description" value={description} onChange={this.handleChange.bind(this, 'description')} />
+                </label>
+
+                <input type="submit" value="Add Transaction"/>
+            </form>
+        )
+
+    }
+}
+
+class TransactionContainer extends Component {
+    state = {
+        transactions: []
     };
 
     componentDidMount() {
-        const id = this.props.params.id;
-
-        this.fetchMessage(id)
-            .then(message => {
-                this.setState({ message: message })
-            })
-            .catch( message => {
-                console.log(message);
-            })
+        this.handleGetTransactions();
     }
 
-    render(){
-        let { message } = this.state;
-        return (
-            <h3>{message}</h3>
-        )
-    }
-}
+    handleGetTransactions = () => {
+        this.getTransactions()
+            .then(this.setTransactions)
+            .catch(this.handleError)
+    };
 
-class Inbox extends Component {
-    render(){
+    getTransactions = () => {
+        return new Promise(function(resolve, reject){
+            resolve(transactionData);
+        })
+    };
+
+    setTransactions = (transactions) => {
+        this.setState({ transactions });
+    };
+
+    handleError = (err) => {
+        console.log(err);
+    };
+
+    addTransaction = (transaction) => {
+        transaction.key = Math.round(Math.random() * (10000 - 1) + 1);
+        transactionData.push(transaction);
+
+        this.handleGetTransactions();
+    };
+
+    render() {
         return (
-            <div>
-                <h2>Inbox</h2>
-                {this.props.children}
+            <div className={styles.transactionContainer}>
+                <TransactionControls onSubmit={this.addTransaction} />
+                <TransactionList transactions={this.state.transactions} />
             </div>
         )
     }
 }
-
-const InboxStats = () => (
-    <div>
-        <h2>Stats</h2>
-        <Link to="/inbox/messages/3">Hey</Link>
-        <Link to="/inbox/messages/4">Yo</Link>
-    </div>
-);
 
 class App extends Component {
   render(){
       return (
           <div>
-              <Link to="/">Home</Link>
-              <Link to="/inbox">Inbox</Link>
-              <Link to="/about">About</Link>
+              <ul>
+                  <li><Link to="/">Home</Link></li>
+                  <li><Link to="/transactions">Transactions</Link></li>
+                  <li><Link to="/inbox">Inbox</Link></li>
+              </ul>
               {this.props.children}
           </div>
       );
@@ -104,7 +162,7 @@ render(
     <Router history={hashHistory}>
         <Route path="/" component={App}>
             <IndexRoute component={Home} />
-            <Route path="about" component={About} />
+            <Route path="transactions" component={TransactionContainer} />
             <Route path="inbox" component={Inbox} >
                 <IndexRoute component={InboxStats} />
                 <Route path="messages/:id" component={Message} />
